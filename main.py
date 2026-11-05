@@ -125,8 +125,16 @@ def run_json_mode(filename="data.json"):
     if data is None:
         return
 
-    if "filters" not in data or "patterns" not in data:
-        print("JSON 데이터에 filters 또는 patterns가 없습니다.")
+    if not isinstance(data, dict):
+        print("JSON 데이터의 최상위 형식이 올바르지 않습니다.")
+        return
+
+    if not isinstance(data.get("filters"), dict):
+        print("JSON filters 형식이 올바르지 않습니다.")
+        return
+
+    if not isinstance(data.get("patterns"), dict):
+        print("JSON patterns 형식이 올바르지 않습니다.")
         return
 
     total = 0
