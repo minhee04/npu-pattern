@@ -33,6 +33,21 @@ def normalize_label(label):
 
     return "UNDECIDED"
 
+
+def normalize_filter_keys(filters):
+    normalized = {}
+
+    for key, value in filters.items():
+        key = str(key).strip().lower()
+
+        if key in ["cross", "+"]:
+            normalized["cross"] = value
+        elif key in ["x"]:
+            normalized["x"] = value
+
+    return normalized
+
+
 def classify(score_cross, score_x):
     epsilon = 1e-9
 
@@ -101,8 +116,12 @@ def run_user_mode():
     print("\n=== MAC 연산 결과 ===")
     print(f"Cross 점수: {score_cross}")
     print(f"X 점수: {score_x}")
+    
     print(f"실행 시간: {elapsed_ms:.6f} ms")
-    print(f"분류 결과: {result}")
+
+    display_result = "판정 불가" if result == "UNDECIDED" else result
+    print(f"분류 결과: {display_result}")
+
 
 def load_json_data(filename):
     try:
@@ -147,11 +166,29 @@ def run_json_mode(filename="data.json"):
         try:
             size = int(pattern_id.split("_")[1])
             filter_key = f"size_{size}"
+            
+            if filter_key not in data["filters"]:
+                raise ValueError(
+                    f"필터 데이터 누락: {filter_key} (사용 가능한 키: {list(data['filters'].keys())})"
+                )
 
             filters = data["filters"][filter_key]
 
+            if not isinstance(filters, dict):
+                raise ValueError(f"{filter_key} 필터 형식 오류")
+
+            filters = normalize_filter_keys(filters)
+
+            if "cross" not in filters:
+                raise ValueError(f"{filter_key}에 Cross 필터가 없습니다.")
+
+            if "x" not in filters:
+                raise ValueError(f"{filter_key}에 X 필터가 없습니다.")
+
             filter_cross = filters["cross"]
             filter_x = filters["x"]
+
+
 
             input_matrix = pattern_data["input"]
             expected = normalize_label(pattern_data["expected"])
